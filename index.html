@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+		body {
+			background-color: #1e1e1e;
+			font-family: Arial, sans-serif;
+			margin: 0;
+			padding: 0;
+		}
+		
+		h1 {
+			color: #fff;
+			text-align: center;
+			margin-top: 20px;
+		}
+		
+        #myProgress {
+            width: 80%;
+			margin: 0 auto;
+            background-color: #333;
+            border-radius: 20px; /* Rounded corners */
+			margin-bottom: 20px;
+        }
+
+        #myBar {
+            width: 0%;
+            height: 30px;
+            background-color: #4CAF50;
+            border-radius: 20px; /* Rounded corners */
+        }
+
+		#infoPanel {
+			display: flex;
+			justify-content: space-between;
+			align-items: center; /* Align items vertically */
+			background-color: #1e1e1e;
+			color: #fff;
+			padding: 10px;
+			border-radius: 10px;
+			margin-bottom: 20px;
+		}
+
+		#elapsedTime,
+		#remainingTime,
+		#progressText,
+		#subjectText {
+			margin-right: 10px; /* Add some space between items */
+		}
+
+		#progressText {
+			margin-left: auto; /* Push progress text to the far end */
+		}
+
+		#themeButton {
+			background-color: #555;
+			color: #fff;
+			border: none;
+			border-radius: 5px;
+			padding: 10px 20px;
+			cursor: pointer;
+			margin-left: auto;
+			margin-right: 20px;
+			transition: background-color 0.3s ease;
+		}
+
+		#themeButton:hover {
+			background-color: #333;
+		}
+    </style>
+</head>
+<body>
+
+<h1>Prüfungszeit Fortschrittsleiste</h1>
+
+<div id="myProgress">
+    <div id="myBar"></div>
+</div>
+
+<div id="infoPanel">
+	<p id="remainingTime"></p>
+	<p id="progressText"></p>
+	<button id="themeButton" onclick="toggleTheme()">🌞</button>
+</div>
+<div id="infoPanel">
+	<p id="elapsedTime"></p>
+</div>
+<div id="infoPanel">
+	<p id="subjectText"></p>
+</div>
+
+<script>
+	var darkTheme = true;
+	
+	function toggleTheme()
+	{
+		darkTheme = !darkTheme;
+		var body = document.body;
+		var elements = document.querySelectorAll('body, h1, #infoPanel');
+		elements.forEach(function(element) {
+			if (darkTheme) {
+				body.style.background = "#1e1e1e";
+				element.style.color = "#fff";
+				element.style.backgroundColor = "#1e1e1e";
+			} else {
+				body.style.background = "#fff";
+				element.style.color = "#000";
+				element.style.backgroundColor = "#fff";
+			}
+		});
+		elements = document.querySelectorAll('#myProgress, #themeButton');
+		elements.forEach(function(element) {
+			if (darkTheme) {
+				document.getElementById("themeButton").innerText = "🌞";
+				element.style.backgroundColor = "#444";
+			} else {
+				document.getElementById("themeButton").innerText = "🌙";
+				element.style.backgroundColor = "#ccc";
+			}
+		});
+	}
+
+    var timeIntervals = [
+        {subject: "Deutsch", start: new Date(2024, 4, 10, 9), end: new Date(2024, 4, 10, 13)},
+        {subject: "Mathematik - ohne Hilfsmittel", start: new Date(2024, 4, 13, 9), end: new Date(2024, 4, 13, 10)},
+        {subject: "Mathematik - mit Hilfsmittel", start: new Date(2024, 4, 13, 10, 30), end: new Date(2024, 4, 13, 12, 30)},
+        {subject: "Physik", start: new Date(2024, 4, 15, 9), end: new Date(2024, 4, 15, 12)},
+        {subject: "Englisch - Reading", start: new Date(2024, 4, 17, 9), end: new Date(2024, 4, 17, 10, 30)},
+        {subject: "Englisch - MBW", start: new Date(2024, 4, 17, 11), end: new Date(2024, 4, 17, 12)}
+    ];
+
+    function getCurrentOrNextSubject() {
+		var now = new Date();
+		for (var i = 0; i < timeIntervals.length; i++) {
+			if (now >= timeIntervals[i].start && now <= timeIntervals[i].end) {
+				return timeIntervals[i].subject;
+			} else if (now < timeIntervals[i].start) {
+				return timeIntervals[i].subject;
+			}
+		}
+		return "Kein Fach";
+	}
+	
+    var totalSeconds = timeIntervals.reduce(function(total, interval) {
+    	return total + (interval.end - interval.start) / 1000;
+    }, 0);
+    var currentSeconds = 0;
+
+    window.onload = startMoving;
+
+    function startMoving() {
+        setInterval(move, 1000);  // Check every second
+		document.getElementById("subjectText").innerText = "Nächstes/Aktuelles Prüfungsfach: " + getCurrentOrNextSubject();
+    }
+
+    function move() {
+		var now = new Date();
+		currentSeconds = 0;
+		for (var i = 0; i < timeIntervals.length; i++) 
+		{
+			if (now > timeIntervals[i].end)
+			{
+				currentSeconds += (timeIntervals[i].end - timeIntervals[i].start) / 1000;
+			}
+			else if (now >= timeIntervals[i].start && now <= timeIntervals[i].end)
+			{
+				currentSeconds += (now - timeIntervals[i].start) / 1000;
+				break;
+			}
+		}
+		var elem = document.getElementById("myBar");
+		var width = (currentSeconds / totalSeconds) * 100;
+		elem.style.width = width + '%';
+		document.getElementById("progressText").innerText = width.toFixed(1) + '%';
+		var remainingSeconds = totalSeconds - currentSeconds;
+		var remainingHours = String(Math.floor(remainingSeconds / 3600)).padStart(2, '0');
+		var remainingMinutes = String(Math.floor((remainingSeconds % 3600) / 60)).padStart(2, '0');
+		document.getElementById("remainingTime").innerText = "Verbleibene Prüfungszeit: " + remainingHours + "h " + remainingMinutes + "min ";
+		var elapsedSeconds = currentSeconds;
+		var elapsedHours = String(Math.floor(elapsedSeconds / 3600)).padStart(2, '0');
+		var elapsedMinutes = String(Math.floor((elapsedSeconds % 3600) / 60)).padStart(2, '0');
+		var elapsedDisplaySeconds = Math.floor(((elapsedSeconds % 3600) % 60) / 60);
+		document.getElementById("elapsedTime").innerText = "Vergangene Prüfungszeit: " + elapsedHours + "h " + elapsedMinutes + "min ";
+	}
+</script>
+
+</body>
+</html>
